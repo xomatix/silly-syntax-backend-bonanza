@@ -2,7 +2,8 @@ package database
 
 import (
 	"fmt"
-	"silly-syntax-backend-bonanza/database/authentication"
+
+	"github.com/xomatix/silly-syntax-backend-bonanza/database/authentication"
 )
 
 func InitDatabase() error {

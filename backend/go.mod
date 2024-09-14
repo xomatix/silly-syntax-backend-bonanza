@@ -1,6 +1,6 @@
-module https://github.com/xomatix/silly-syntax-backend-bonanza
+module github.com/xomatix/silly-syntax-backend-bonanza
 
-go 1.22.3
+go 1.23
 
 require (
 	github.com/mattn/go-sqlite3 v1.14.22 // indirect

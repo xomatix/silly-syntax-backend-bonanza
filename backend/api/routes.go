@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"silly-syntax-backend-bonanza/api/auth"
-	"silly-syntax-backend-bonanza/api/collection"
-	"silly-syntax-backend-bonanza/api/types"
-	"silly-syntax-backend-bonanza/api/views"
-	"silly-syntax-backend-bonanza/database"
-	"silly-syntax-backend-bonanza/database/permissions"
+
+	"github.com/xomatix/silly-syntax-backend-bonanza/api/auth"
+	"github.com/xomatix/silly-syntax-backend-bonanza/api/collection"
+	"github.com/xomatix/silly-syntax-backend-bonanza/api/types"
+	"github.com/xomatix/silly-syntax-backend-bonanza/api/views"
+	"github.com/xomatix/silly-syntax-backend-bonanza/database"
+	"github.com/xomatix/silly-syntax-backend-bonanza/database/permissions"
 )
 
 func InitApiRoutes(mux *http.ServeMux) {

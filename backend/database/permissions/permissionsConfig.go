@@ -3,8 +3,9 @@ package permissions
 import (
 	"encoding/json"
 	"fmt"
-	"silly-syntax-backend-bonanza/database"
-	querygenerators "silly-syntax-backend-bonanza/database/queryGenerators"
+
+	"github.com/xomatix/silly-syntax-backend-bonanza/database"
+	querygenerators "github.com/xomatix/silly-syntax-backend-bonanza/database/queryGenerators"
 )
 
 type TablePermission struct {

@@ -2,9 +2,11 @@ package permissions
 
 import (
 	"fmt"
-	"silly-syntax-backend-bonanza/database"
-	querygenerators "silly-syntax-backend-bonanza/database/queryGenerators"
+
 	"strings"
+
+	"github.com/xomatix/silly-syntax-backend-bonanza/database"
+	querygenerators "github.com/xomatix/silly-syntax-backend-bonanza/database/queryGenerators"
 )
 
 func ResolvePermissionsMacro(macro string, userID int64) string {

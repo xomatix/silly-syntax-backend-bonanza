@@ -2,8 +2,10 @@ package querygenerators
 
 import (
 	"fmt"
-	"silly-syntax-backend-bonanza/database"
-	"silly-syntax-backend-bonanza/database/authentication"
+
+	"github.com/xomatix/silly-syntax-backend-bonanza/database"
+	"github.com/xomatix/silly-syntax-backend-bonanza/database/authentication"
+
 	"strings"
 )
 

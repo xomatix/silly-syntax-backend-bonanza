@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"silly-syntax-backend-bonanza/api/types"
-	"silly-syntax-backend-bonanza/database"
-	"silly-syntax-backend-bonanza/database/authentication"
-	"silly-syntax-backend-bonanza/database/permissions"
-	querygenerators "silly-syntax-backend-bonanza/database/queryGenerators"
+
+	"github.com/xomatix/silly-syntax-backend-bonanza/database"
+	"github.com/xomatix/silly-syntax-backend-bonanza/database/authentication"
+	"github.com/xomatix/silly-syntax-backend-bonanza/database/permissions"
+
+	"github.com/xomatix/silly-syntax-backend-bonanza/api/types"
+	querygenerators "github.com/xomatix/silly-syntax-backend-bonanza/database/queryGenerators"
 )
 
 func InitCollectionDeleteRoutes(w http.ResponseWriter, r *http.Request) {

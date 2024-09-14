@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"silly-syntax-backend-bonanza/api/types"
-	"silly-syntax-backend-bonanza/database"
-	"silly-syntax-backend-bonanza/database/authentication"
-	querygenerators "silly-syntax-backend-bonanza/database/queryGenerators"
+
+	"github.com/xomatix/silly-syntax-backend-bonanza/api/types"
+	"github.com/xomatix/silly-syntax-backend-bonanza/database"
+	"github.com/xomatix/silly-syntax-backend-bonanza/database/authentication"
+	querygenerators "github.com/xomatix/silly-syntax-backend-bonanza/database/queryGenerators"
 )
 
 type AuthenticationLogin struct {

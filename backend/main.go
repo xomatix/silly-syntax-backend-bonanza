@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"silly-syntax-backend-bonanza/api"
-	"silly-syntax-backend-bonanza/database"
-	_ "silly-syntax-backend-bonanza/statik"
+
+	"github.com/xomatix/silly-syntax-backend-bonanza/api"
+	"github.com/xomatix/silly-syntax-backend-bonanza/database"
+	_ "github.com/xomatix/silly-syntax-backend-bonanza/statik"
 
 	"github.com/rakyll/statik/fs"
 )

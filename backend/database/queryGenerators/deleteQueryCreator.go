@@ -2,8 +2,10 @@ package querygenerators
 
 import (
 	"fmt"
-	"silly-syntax-backend-bonanza/database"
+
 	"strings"
+
+	"github.com/xomatix/silly-syntax-backend-bonanza/database"
 )
 
 type DeleteQueryCreator struct {
