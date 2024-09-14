@@ -1,0 +1,15 @@
+.vscode
+
+.vscode/*.json
+backend/statik
+
+backend/statik/*.go
+
+backend/*.exe
+
+backend/*.db
+backend/*.exe
+
+
+
+backend/silly-syntax-backend-bonanza
