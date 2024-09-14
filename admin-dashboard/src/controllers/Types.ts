@@ -58,3 +58,7 @@ export type LoginModel = {
   login: string;
   password: string;
 };
+
+export type ViewModel = {
+  viewName: string;
+};

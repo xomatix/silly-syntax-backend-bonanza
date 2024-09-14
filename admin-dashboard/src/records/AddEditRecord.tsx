@@ -12,6 +12,7 @@ import {
 import Dialog from "../components/Dialog";
 import SelectRecordReference from "./SelectRecordReference";
 import { RecordController } from "../controllers/RecordController";
+import PreviewReport from "../raportViews/PreviewReport";
 
 function AddEditRecord({
   CollectionConfig,
@@ -22,13 +23,18 @@ function AddEditRecord({
   onClose: () => void;
   recordID: number;
 }) {
-  const [recordData, setRecordData] = useState<RecordModel>({});
+  const [recordData, setRecordData] = useState<RecordModel>({} as RecordModel);
   const [isSelectReferenceOpen, setSelectReferenceOpen] =
     useState<boolean>(false);
+  const [isReportPreviewOpen, setReportPreviewOpen] = useState<boolean>(false);
   const [referenceCollection, setReferenceCollection] = useState<string>("");
   const [referenceField, setReferenceField] = useState<string>("");
 
   useEffect(() => {
+    prepareRecord();
+  }, []);
+
+  const prepareRecord = async () => {
     if (recordID != 0 && recordID != undefined && recordID != null) {
       downloadRecord();
     } else {
@@ -47,7 +53,7 @@ function AddEditRecord({
 
       setRecordData(blankRecord);
     }
-  }, []);
+  };
 
   const downloadRecord = async () => {
     let model: DataListModel = {
@@ -66,6 +72,8 @@ function AddEditRecord({
       setRecordData(downloadedRecord);
     }
   };
+
+  //#region handlers
 
   const handleSubmit = async () => {
     let response: ResponseMessage = {
@@ -147,12 +155,16 @@ function AddEditRecord({
     setSelectReferenceOpen(false);
   };
 
+  const handleReportPreviewClose = async () => {
+    setReportPreviewOpen(false);
+  };
+  //#endregion
+
   return (
     <form className="p-4 mx-auto absolute top-[3rem] justify-start text-black w-[40rem]">
       <h2 className="text-2xl font-bold mb-4">
         Add {CollectionConfig.name} Record
       </h2>
-
       {/* Input fields */}
       {CollectionConfig.columns.map((col, index) => (
         <div key={index} className="mb-4">
@@ -223,7 +235,20 @@ function AddEditRecord({
           )}
         </div>
       ))}
+      {/* Buttons section */}
 
+      {CollectionConfig.name == "views" &&
+        recordID != 0 &&
+        recordID != undefined &&
+        recordID != null && (
+          <button
+            type="button"
+            onClick={() => setReportPreviewOpen(true)}
+            className="bg-white border border-2 border-gray-950 p-2 mb-2 rounded-lg w-full"
+          >
+            Preview Report
+          </button>
+        )}
       {recordID != 0 && recordID != undefined && recordID != null && (
         <button
           type="button"
@@ -240,18 +265,28 @@ function AddEditRecord({
       >
         Save
       </button>
-
       {/* Select Record Reference */}
       <Dialog
         isOpen={isSelectReferenceOpen}
         onClose={() => handleSelectReferenceClose("")}
       >
-        <div className="w-[50rem] h-[30rem]">
+        <div className="w-[100rem] h-[50rem]">
           {isSelectReferenceOpen && referenceCollection != "" && (
             <SelectRecordReference
               collectionName={referenceCollection}
               onClose={(s: string) => handleSelectReferenceClose(s)}
             />
+          )}
+        </div>
+      </Dialog>
+      {/* Preview view report */}
+      <Dialog
+        isOpen={isReportPreviewOpen}
+        onClose={() => handleReportPreviewClose()}
+      >
+        <div className="w-[100rem] h-[50rem]">
+          {isReportPreviewOpen && CollectionConfig.name == "views" && (
+            <PreviewReport viewName={recordData["name"] as string} />
           )}
         </div>
       </Dialog>
