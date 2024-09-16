@@ -1,4 +1,3 @@
-import React from "react";
 import { ViewModel, ResponseMessage } from "../controllers/Types";
 
 import { useEffect, useState } from "react";
@@ -50,7 +49,7 @@ function PreviewReport({ viewName }: { viewName: string }) {
                       key={i}
                       className="py-2 px-4 text-black font-semibold border-b border-gray-200 text-left max-w-[12rem] overflow-x-hidden"
                     >
-                      {item[key] as string}
+                      {item.get(key) as string}
                     </td>
                   ))}
                 </tr>

@@ -161,7 +161,9 @@ function AddEditRecord({
   //#endregion
 
   return (
-    <form className="p-4 mx-auto absolute top-[3rem] justify-start text-black w-[40rem]">
+    <form
+      className={`p-4 mx-auto absolute top-[3rem] justify-start text-black w-[40rem]`}
+    >
       <h2 className="text-2xl font-bold mb-4">
         Add {CollectionConfig.name} Record
       </h2>
@@ -203,7 +205,7 @@ function AddEditRecord({
                       : "text"
                   }
                   name="record field"
-                  className="border mb-2 rounded-md w-full bg-slate-200 focus:outline-none transition duration-300 "
+                  className={`border mb-2 rounded-md w-full bg-slate-200 focus:outline-none transition duration-300 resize`}
                   placeholder="..."
                   value={
                     col.dataType == DataType.DATETIME
