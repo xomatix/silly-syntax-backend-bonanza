@@ -37,7 +37,7 @@ func (q InsertQueryCreator) InsertQuery() (string, error) {
 		if !exists {
 			continue
 		}
-		if column.DataType == database.DTDOUBLE || column.DataType == database.DTINTEGER || column.DataType == database.DTBOOLEAN {
+		if column.DataType == database.DTDOUBLE || column.DataType == database.DTINTEGER || column.DataType == database.DTBOOLEAN || column.DataType == database.DTREFERENCE {
 			sqlValues = append(sqlValues, fmt.Sprintf("%v", val))
 		} else if column.DataType == database.DTTEXT && q.CollectionName == "users" && column.Name == "password" {
 			hashedPassword, err := authentication.HashPassword(val.(string))
