@@ -30,6 +30,7 @@ func (q InsertQueryCreator) InsertQuery() (string, error) {
 	var sqlColumns []string
 
 	for _, column := range tableConfig.Columns {
+		initialLen := len(sqlValues)
 		if column.Name == "id" || column.Name == "created" || column.Name == "updated" {
 			continue
 		}
@@ -38,7 +39,9 @@ func (q InsertQueryCreator) InsertQuery() (string, error) {
 			continue
 		}
 		if column.DataType == database.DTDOUBLE || column.DataType == database.DTINTEGER || column.DataType == database.DTBOOLEAN || column.DataType == database.DTREFERENCE {
-			sqlValues = append(sqlValues, fmt.Sprintf("%v", val))
+			if len(fmt.Sprintf("%v", val)) > 0 {
+				sqlValues = append(sqlValues, fmt.Sprintf("%v", val))
+			}
 		} else if column.DataType == database.DTTEXT && q.CollectionName == "users" && column.Name == "password" {
 			hashedPassword, err := authentication.HashPassword(val.(string))
 			if err != nil {
@@ -49,7 +52,9 @@ func (q InsertQueryCreator) InsertQuery() (string, error) {
 			val = strings.ReplaceAll(val.(string), "'", "''")
 			sqlValues = append(sqlValues, fmt.Sprintf("'%s'", val))
 		}
-		sqlColumns = append(sqlColumns, column.Name)
+		if initialLen < len(sqlValues) {
+			sqlColumns = append(sqlColumns, column.Name)
+		}
 	}
 
 	joinedValues := strings.Join(sqlValues, ",")

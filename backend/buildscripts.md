@@ -16,3 +16,6 @@
 
 Build command
 `go build -o silly-syntax-backend-bonanza.exe .`
+
+For smaller size of exe
+`go build -ldflags="-w -s" -o withflags .`
