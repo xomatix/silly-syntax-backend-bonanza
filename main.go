@@ -35,6 +35,27 @@ func main() {
 
 	handler := enableCORS(mux)
 
+	// fmt.Println("Loading plugins...")
+
+	// functions := pluginHandler.LoadPlugins()
+
+	// for pluginPath, f := range functions {
+	// 	fmt.Printf("Invoking function from %s...\n", pluginPath)
+
+	// 	objToPass := map[string]interface{}{
+	// 		"name":    "Mati",
+	// 		"surname": "Swierczek",
+	// 		"age":     21,
+	// 	}
+
+	// 	if err = f(&objToPass); err != nil {
+	// 		fmt.Printf("Error: %v\n", err)
+	// 	}
+
+	// 	strOfObj, _ := json.Marshal(objToPass)
+	// 	fmt.Printf("Resulting object: %s\n", strOfObj)
+	// }
+
 	fmt.Println("Starting server on http://localhost:8080")
 	fmt.Println(http.ListenAndServe(":8080", handler))
 
