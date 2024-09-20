@@ -29,7 +29,7 @@ function EditCollection({
     const response = await CollectionController.collectionsList();
     setAvaliableCollections(
       response.data
-        .filter((col: TableConfig) => col.name != CollectionConfig.name)
+        //.filter((col: TableConfig) => col.name != CollectionConfig.name)
         .map((col: TableConfig) => col.name)
     );
   };

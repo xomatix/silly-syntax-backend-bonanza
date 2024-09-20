@@ -39,7 +39,7 @@ function PreviewReport({ viewName }: { viewName: string }) {
               </tr>
             </thead>
             <tbody>
-              {Object.values(viewResult).map((item, index) => (
+              {Object.values(viewResult).map((item: any, index: number) => (
                 <tr
                   key={index}
                   className="hover:bg-slate-200 transition ease-in-out duration-300 "
@@ -49,7 +49,7 @@ function PreviewReport({ viewName }: { viewName: string }) {
                       key={i}
                       className="py-2 px-4 text-black font-semibold border-b border-gray-200 text-left max-w-[12rem] overflow-x-hidden"
                     >
-                      {item.get(key) as string}
+                      {item[key] as string}
                     </td>
                   ))}
                 </tr>
