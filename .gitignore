@@ -13,6 +13,3 @@ backend/*.exe
 
 
 backend/silly-syntax-backend-bonanza
-silly-syntax-backend-bonanza/bonanza.db
-silly-syntax-backend-bonanza/silly-syntax-backend-bonanza
-*.db
