@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+  ColumnConfig,
   DataDeleteModel,
   DataInsertModel,
   DataListModel,
@@ -158,6 +159,18 @@ function AddEditRecord({
   const handleReportPreviewClose = async () => {
     setReportPreviewOpen(false);
   };
+
+  const handleRecordEdit = (e: any, col: ColumnConfig) => {
+    const nVal =
+      col.dataType == DataType.INTEGER || col.dataType == DataType.DOUBLE
+        ? Number(e.target.value)
+        : e.target.value;
+    console.log("kurwa", nVal);
+    setRecordData({
+      ...recordData,
+      [col.name]: nVal,
+    });
+  };
   //#endregion
 
   return (
@@ -212,12 +225,7 @@ function AddEditRecord({
                       ? (recordData[col.name] as string)?.slice(0, 16)
                       : (recordData[col.name] as string)
                   }
-                  onChange={(e) => {
-                    setRecordData({
-                      ...recordData,
-                      [col.name]: e.target.value,
-                    });
-                  }}
+                  onChange={(e) => handleRecordEdit(e, col)}
                 />
               </div>
             )}
