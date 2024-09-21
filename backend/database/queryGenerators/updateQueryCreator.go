@@ -10,9 +10,17 @@ import (
 
 type UpdateQueryCreator struct {
 	CollectionName string         `json:"collectionName"`
-	ID             int32          `json:"id"`
+	ID             int64          `json:"id"`
 	Values         map[string]any `json:"values"`
 	Filter         string
+}
+
+func (q UpdateQueryCreator) SelectQuery() (string, error) {
+	selectQueryCreator := SelectQueryCreator{
+		CollectionName: q.CollectionName,
+		ID:             []int64{q.ID},
+	}
+	return selectQueryCreator.GetQuery()
 }
 
 func (q UpdateQueryCreator) UpdateQuery() (string, error) {
@@ -29,11 +37,11 @@ func (q UpdateQueryCreator) UpdateQuery() (string, error) {
 			continue
 		}
 		val, exists := q.Values[column.Name]
-		if column.Name != "password" && column.NotNull && (val == nil || len(val.(string)) == 0) {
-			return "", fmt.Errorf("column %s cannot be null", column.Name)
-		}
 		if !exists || val == nil {
 			continue
+		}
+		if column.Name != "password" && column.NotNull && (len(val.(string)) == 0) {
+			return "", fmt.Errorf("column %s cannot be null", column.Name)
 		}
 		if column.DataType == database.DTDOUBLE || column.DataType == database.DTINTEGER || column.DataType == database.DTBOOLEAN {
 			sqlValues = append(sqlValues, fmt.Sprintf("%s = %v", column.Name, val))
@@ -43,7 +51,7 @@ func (q UpdateQueryCreator) UpdateQuery() (string, error) {
 				return "", fmt.Errorf("failed to hash password: %v", err)
 			}
 			sqlValues = append(sqlValues, fmt.Sprintf("'%s'", hashedPassword))
-		} else if column.DataType == database.DTREFERENCE {
+		} else if column.DataType == database.DTREFERENCE && len(val.(string)) > 0 {
 			if int(val.(float64)) != 0 || column.NotNull {
 				isNotPresent := checkIfForeignKeysExist(column.ReferenceTable, fmt.Sprintf("%d", int(val.(float64))))
 				if isNotPresent != nil {

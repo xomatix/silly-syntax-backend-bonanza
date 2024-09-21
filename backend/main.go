@@ -7,6 +7,7 @@ import (
 
 	"github.com/xomatix/silly-syntax-backend-bonanza/api"
 	"github.com/xomatix/silly-syntax-backend-bonanza/database"
+	pluginmanager "github.com/xomatix/silly-syntax-backend-bonanza/pluginManager"
 	_ "github.com/xomatix/silly-syntax-backend-bonanza/statik"
 
 	"github.com/rakyll/statik/fs"
@@ -32,6 +33,8 @@ func main() {
 	database.InitDatabasePermissions()
 	database.InitDatabaseViews()
 	api.InitApiRoutes(mux)
+
+	pluginmanager.GetPluginLoader().LoadPlugins(mux)
 
 	handler := enableCORS(mux)
 

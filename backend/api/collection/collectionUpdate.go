@@ -10,10 +10,11 @@ import (
 	"github.com/xomatix/silly-syntax-backend-bonanza/database/authentication"
 	"github.com/xomatix/silly-syntax-backend-bonanza/database/permissions"
 	querygenerators "github.com/xomatix/silly-syntax-backend-bonanza/database/queryGenerators"
+	pluginmanager "github.com/xomatix/silly-syntax-backend-bonanza/pluginManager"
 )
 
 func InitCollectionUpdateRoutes(w http.ResponseWriter, r *http.Request) {
-
+	//region Basic read information
 	body, err := io.ReadAll(r.Body)
 	resp := types.ResponseMessage{
 		Success: true,
@@ -58,6 +59,44 @@ func InitCollectionUpdateRoutes(w http.ResponseWriter, r *http.Request) {
 	resolvedPermissionMacro := permissions.ResolvePermissionsMacro(collectionPermisionMacro.Update, userID)
 	query.Filter = resolvedPermissionMacro
 
+	generatedReturningQuery, err := query.SelectQuery()
+	if err != nil {
+		resp.Success = false
+		resp.Message = err.Error()
+		jsonStr, _ := json.Marshal(resp)
+		w.Write(jsonStr)
+		return
+	}
+	//endregion
+
+	//region update exec with trigger
+	originalRecord, err := database.ExecuteQuery(generatedReturningQuery)
+	if err != nil {
+		resp.Success = false
+		resp.Message = err.Error()
+		jsonStr, _ := json.Marshal(resp)
+		w.Write(jsonStr)
+		return
+	}
+
+	//so we have copy here
+	updatedRecord := make(map[string]interface{})
+	for k, v := range originalRecord[0] {
+		updatedRecord[k] = v
+	}
+	for k, v := range query.Values {
+		updatedRecord[k] = v
+	}
+
+	err = triggerBeforeUpdate(query.CollectionName, originalRecord[0], &updatedRecord)
+	if err != nil {
+		resp.Success = false
+		resp.Message = err.Error()
+		jsonStr, _ := json.Marshal(resp)
+		w.Write(jsonStr)
+		return
+	}
+
 	generatedUpdateQuery, err := query.UpdateQuery()
 	if err != nil {
 		resp.Success = false
@@ -76,6 +115,10 @@ func InitCollectionUpdateRoutes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	triggerAfterUpdate(query.CollectionName, originalRecord[0], &updatedRecord)
+	//endregion
+
+	//region returning data with auth
 	jsonString, err := json.Marshal(resp)
 	if err != nil {
 		resp.Success = false
@@ -93,4 +136,23 @@ func InitCollectionUpdateRoutes(w http.ResponseWriter, r *http.Request) {
 		authentication.SetAuthenticationCookies(w, userID, username)
 	}
 	w.Write(jsonString)
+	//endregion
+}
+
+func triggerBeforeUpdate(collectionName string, originalObj map[string]interface{}, obj *map[string]interface{}) error {
+	funcsToCall := pluginmanager.GetPluginLoader().Triggers[collectionName]["before_update"]
+	for _, f := range funcsToCall {
+		err := f(originalObj, obj)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func triggerAfterUpdate(collectionName string, originalObj map[string]interface{}, obj *map[string]interface{}) {
+	funcsToCall := pluginmanager.GetPluginLoader().Triggers[collectionName]["after_update"]
+	for _, f := range funcsToCall {
+		f(originalObj, obj)
+	}
 }
