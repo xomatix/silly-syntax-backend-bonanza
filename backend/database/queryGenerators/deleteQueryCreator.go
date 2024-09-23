@@ -10,7 +10,7 @@ import (
 
 type DeleteQueryCreator struct {
 	CollectionName string `json:"collectionName"`
-	ID             int32  `json:"id"`
+	ID             int64  `json:"id"`
 	Filter         string
 }
 

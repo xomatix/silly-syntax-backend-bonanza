@@ -91,7 +91,7 @@ func InitCollectionUpdateRoutes(w http.ResponseWriter, r *http.Request) {
 	err = triggerBeforeUpdate(query.CollectionName, originalRecord[0], &updatedRecord)
 	if err != nil {
 		resp.Success = false
-		resp.Message = err.Error()
+		resp.Message = "Record not updated. " + err.Error()
 		jsonStr, _ := json.Marshal(resp)
 		w.Write(jsonStr)
 		return
