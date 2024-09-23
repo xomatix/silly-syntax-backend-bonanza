@@ -95,12 +95,16 @@ func (pl *PluginLoader) loadPlugin(pluginPath string, ctx map[string]interface{}
 	}
 
 	triggers, err := initPluginFunc(ctx)
+	pluginName := filepath.Base(pluginPath)
+
+	if err != nil {
+		return fmt.Errorf("failed to initialize plugin: %s", pluginName)
+	}
 
 	for k, f := range triggers {
 		pl.AddTrigger(k, f)
 	}
 
-	pluginName := filepath.Base(pluginPath)
 	pl.Plugins = append(pl.Plugins, pluginName)
 
 	return nil
