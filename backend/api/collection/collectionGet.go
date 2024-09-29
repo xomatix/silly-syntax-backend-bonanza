@@ -67,9 +67,7 @@ func InitCollectionGetRoutes(w http.ResponseWriter, r *http.Request) {
 		query.Filter = resolvedPermissionMacro
 	}
 
-	generatedSelectQuery, _ := query.GetQuery()
-
-	result, err := database.ExecuteQuery(generatedSelectQuery)
+	data, err := ControllerGet(query)
 	if err != nil {
 		resp.Success = false
 		resp.Message = err.Error()
@@ -78,9 +76,7 @@ func InitCollectionGetRoutes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var rows []map[string]interface{}
-	rows = append(rows, result...)
-	resp.Data = rows
+	resp.Data = data
 
 	jsonString, err := json.Marshal(resp)
 	if err != nil {
@@ -95,4 +91,18 @@ func InitCollectionGetRoutes(w http.ResponseWriter, r *http.Request) {
 		authentication.SetAuthenticationCookies(w, userID, username)
 	}
 	w.Write(jsonString)
+}
+
+func ControllerGet(query querygenerators.SelectQueryCreator) ([]map[string]interface{}, error) {
+	generatedSelectQuery, _ := query.GetQuery()
+
+	result, err := database.ExecuteQuery(generatedSelectQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	var rows []map[string]interface{}
+	rows = append(rows, result...)
+
+	return rows, err
 }

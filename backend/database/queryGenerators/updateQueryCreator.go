@@ -50,7 +50,7 @@ func (q UpdateQueryCreator) UpdateQuery() (string, error) {
 			if err != nil {
 				return "", fmt.Errorf("failed to hash password: %v", err)
 			}
-			sqlValues = append(sqlValues, fmt.Sprintf("'%s'", hashedPassword))
+			sqlValues = append(sqlValues, fmt.Sprintf("%s = '%s'", column.Name, hashedPassword))
 		} else if column.DataType == database.DTREFERENCE && len(val.(string)) > 0 {
 			if int(val.(float64)) != 0 || column.NotNull {
 				isNotPresent := checkIfForeignKeysExist(column.ReferenceTable, fmt.Sprintf("%d", int(val.(float64))))

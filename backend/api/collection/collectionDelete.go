@@ -63,8 +63,8 @@ func InitCollectionDeleteRoutes(w http.ResponseWriter, r *http.Request) {
 	deleteQuery.Filter = resolvedPermissionMacro
 
 	generatedDeleteQuery, err := deleteQuery.DeleteQuery()
+
 	if err != nil {
-		fmt.Println(err)
 		resp.Success = false
 		resp.Message = err.Error()
 		jsonStr, _ := json.Marshal(resp)

@@ -48,7 +48,7 @@ func (q DeleteQueryCreator) DeleteQuery() (string, error) {
 		return "", isNotPresent
 	}
 
-	deleteQuery := fmt.Sprintf("BEGIN;%s DELETE FROM %s WHERE (id = %d) %s; COMMIT;", referencesClear, q.CollectionName, q.ID, filter)
+	deleteQuery := fmt.Sprintf("%s DELETE FROM %s WHERE (id = %d) %s", referencesClear, q.CollectionName, q.ID, filter)
 
 	return deleteQuery, nil
 }
