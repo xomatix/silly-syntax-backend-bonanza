@@ -40,7 +40,7 @@ func (q UpdateQueryCreator) UpdateQuery() (string, error) {
 		if !exists || val == nil {
 			continue
 		}
-		if column.Name != "password" && column.NotNull && (len(val.(string)) == 0) {
+		if column.Name != "password" && column.NotNull && (len(fmt.Sprintf("%v", val)) == 0) {
 			return "", fmt.Errorf("column %s cannot be null", column.Name)
 		}
 		if column.DataType == database.DTDOUBLE || column.DataType == database.DTINTEGER || column.DataType == database.DTBOOLEAN {
