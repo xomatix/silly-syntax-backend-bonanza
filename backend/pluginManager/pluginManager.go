@@ -16,6 +16,7 @@ import (
 type PluginLoader struct {
 	Plugins  []string
 	Triggers map[string]map[string][](func(map[string]interface{}, *map[string]interface{}) error)
+	Api      map[string](func(map[string]interface{}, int64) (map[string]interface{}, error))
 }
 
 var instance *PluginLoader
@@ -25,6 +26,7 @@ func GetPluginLoader() *PluginLoader {
 		instance = &PluginLoader{
 			Plugins:  make([]string, 0),
 			Triggers: make(map[string]map[string][](func(map[string]interface{}, *map[string]interface{}) error)),
+			Api:      make(map[string](func(map[string]interface{}, int64) (map[string]interface{}, error))),
 		}
 	}
 	return instance
@@ -40,6 +42,13 @@ func (pl *PluginLoader) AddTrigger(caller string, f []func(map[string]interface{
 	}
 
 	pl.Triggers[call[0]][call[1]] = append(pl.Triggers[call[0]][call[1]], f...)
+}
+
+func (pl *PluginLoader) AddApiRoute(caller string, f func(map[string]interface{}, int64) (map[string]interface{}, error)) {
+	if _, ok := pl.Api[caller]; ok == true {
+		fmt.Printf("Api route %s already exists overwriting\n", caller)
+	}
+	pl.Api[caller] = f
 }
 
 func (pl *PluginLoader) LoadPlugins(mux *http.ServeMux) error {
@@ -89,12 +98,12 @@ func (pl *PluginLoader) loadPlugin(pluginPath string, ctx map[string]interface{}
 		return fmt.Errorf("failed to lookup InitPlugin symbol: %v", err)
 	}
 
-	initPluginFunc, ok := initPluginSymbol.(func(map[string]interface{}) (map[string][](func(map[string]interface{}, *map[string]interface{}) error), error))
+	initPluginFunc, ok := initPluginSymbol.(func(map[string]interface{}) (map[string][](func(map[string]interface{}, *map[string]interface{}) error), map[string](func(map[string]interface{}, int64) (map[string]interface{}, error)), error))
 	if !ok {
 		return fmt.Errorf("plugin does not have the expected InitPlugin function signature")
 	}
 
-	triggers, err := initPluginFunc(ctx)
+	triggers, apiRoutes, err := initPluginFunc(ctx)
 	pluginName := filepath.Base(pluginPath)
 
 	if err != nil {
@@ -103,6 +112,9 @@ func (pl *PluginLoader) loadPlugin(pluginPath string, ctx map[string]interface{}
 
 	for k, f := range triggers {
 		pl.AddTrigger(k, f)
+	}
+	for k, f := range apiRoutes {
+		pl.AddApiRoute(k, f)
 	}
 
 	pl.Plugins = append(pl.Plugins, pluginName)
