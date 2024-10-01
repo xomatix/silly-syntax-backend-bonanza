@@ -7,6 +7,7 @@ import (
 
 	"github.com/xomatix/silly-syntax-backend-bonanza/api/auth"
 	"github.com/xomatix/silly-syntax-backend-bonanza/api/collection"
+	"github.com/xomatix/silly-syntax-backend-bonanza/api/extensions"
 	"github.com/xomatix/silly-syntax-backend-bonanza/api/types"
 	"github.com/xomatix/silly-syntax-backend-bonanza/api/views"
 	"github.com/xomatix/silly-syntax-backend-bonanza/database"
@@ -18,6 +19,7 @@ func InitApiRoutes(mux *http.ServeMux) {
 	initCollectionManipulationRoutes(mux)
 	initAuthenticationRoutes(mux)
 	initViewsRoutes(mux)
+	extensions.InitExtensionsRoutes(mux)
 }
 
 func initCollectionManipulationRoutes(mux *http.ServeMux) {

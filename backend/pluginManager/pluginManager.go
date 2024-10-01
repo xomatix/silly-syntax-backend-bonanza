@@ -45,8 +45,9 @@ func (pl *PluginLoader) AddTrigger(caller string, f []func(map[string]interface{
 }
 
 func (pl *PluginLoader) AddApiRoute(caller string, f func(map[string]interface{}, int64) (map[string]interface{}, error)) {
-	if _, ok := pl.Api[caller]; ok == true {
+	if _, ok := pl.Api[caller]; ok {
 		fmt.Printf("Api route %s already exists overwriting\n", caller)
+		return
 	}
 	pl.Api[caller] = f
 }
@@ -80,7 +81,7 @@ func (pl *PluginLoader) LoadPlugins(mux *http.ServeMux) error {
 			if err != nil {
 				log.Printf("Failed to load plugin %s: %v", pluginPath, err)
 			} else {
-				log.Printf("Successfully loaded plugin %s", pluginPath)
+				//log.Printf("Successfully loaded plugin %s", pluginPath)
 			}
 		}
 	}
