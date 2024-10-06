@@ -7,52 +7,17 @@ import (
 	"os"
 	"path/filepath"
 	"plugin"
-	"strings"
 
-	"github.com/xomatix/silly-syntax-backend-bonanza/database"
+	"github.com/xomatix/silly-syntax-backend-bonanza/api/collection"
+	"github.com/xomatix/silly-syntax-backend-bonanza/database/authentication"
+	"github.com/xomatix/silly-syntax-backend-bonanza/database/database_functions"
+	querygenerators "github.com/xomatix/silly-syntax-backend-bonanza/database/queryGenerators"
+	pluginfunctions "github.com/xomatix/silly-syntax-backend-bonanza/pluginManager/plugin_functions"
 )
 
 // loads all plugins
-type PluginLoader struct {
-	Plugins  []string
-	Triggers map[string]map[string][](func(map[string]interface{}, *map[string]interface{}) error)
-	Api      map[string](func(map[string]interface{}, int64) (map[string]interface{}, error))
-}
 
-var instance *PluginLoader
-
-func GetPluginLoader() *PluginLoader {
-	if instance == nil {
-		instance = &PluginLoader{
-			Plugins:  make([]string, 0),
-			Triggers: make(map[string]map[string][](func(map[string]interface{}, *map[string]interface{}) error)),
-			Api:      make(map[string](func(map[string]interface{}, int64) (map[string]interface{}, error))),
-		}
-	}
-	return instance
-}
-
-func (pl *PluginLoader) AddTrigger(caller string, f []func(map[string]interface{}, *map[string]interface{}) error) {
-	call := strings.Split(caller, "/")
-	if _, ok := pl.Triggers[call[0]]; ok == false {
-		pl.Triggers[call[0]] = make(map[string][](func(map[string]interface{}, *map[string]interface{}) error))
-	}
-	if _, ok := pl.Triggers[call[0]][call[1]]; ok == false {
-		pl.Triggers[call[0]][call[1]] = make([](func(map[string]interface{}, *map[string]interface{}) error), 0)
-	}
-
-	pl.Triggers[call[0]][call[1]] = append(pl.Triggers[call[0]][call[1]], f...)
-}
-
-func (pl *PluginLoader) AddApiRoute(caller string, f func(map[string]interface{}, int64) (map[string]interface{}, error)) {
-	if _, ok := pl.Api[caller]; ok {
-		fmt.Printf("Api route %s already exists overwriting\n", caller)
-		return
-	}
-	pl.Api[caller] = f
-}
-
-func (pl *PluginLoader) LoadPlugins(mux *http.ServeMux) error {
+func LoadPlugins(mux *http.ServeMux) error {
 	pluginDir := "./plugins"
 	files, err := os.ReadDir(pluginDir)
 	if err != nil {
@@ -60,24 +25,48 @@ func (pl *PluginLoader) LoadPlugins(mux *http.ServeMux) error {
 	}
 
 	executeQuery := func(q string) ([]map[string]interface{}, error) {
-		return database.ExecuteQuery(q)
+		return database_functions.ExecuteQuery(q)
 	}
 
 	executeNonQuery := func(q string) (int64, error) {
-		return database.ExecuteNonQuery(q)
+		return database_functions.ExecuteNonQuery(q)
+	}
+
+	resolveCookiesWithUserFromHeader := func(r *http.Request) (int64, string, error) {
+		return authentication.ResolveCookiesWithUserFromHeader(r)
+	}
+
+	collectionPostRaw := func(queryRaw map[string]interface{}, userID int64) map[string]interface{} {
+		fmt.Printf("queryRaw: %v\n", queryRaw)
+		query := querygenerators.InsertQueryCreator{
+			CollectionName: queryRaw["collectionName"].(string),
+			Values:         queryRaw["values"].(map[string]any),
+		}
+		fmt.Printf("query: %v\n", query)
+
+		resp := collection.CollectionPost(query, userID)
+
+		fmt.Printf("resp im core: %v\n", resp)
+		return map[string]interface{}{
+			"success": resp.Success,
+			"message": resp.Message,
+			"data":    resp.Data,
+		}
 	}
 
 	// Create a map to pass as context
 	plArgs := map[string]interface{}{
-		"Mux":             mux,
-		"ExecuteQuery":    executeQuery,
-		"ExecuteNonQuery": executeNonQuery,
+		"Mux":                              mux,
+		"ExecuteQuery":                     executeQuery,
+		"ExecuteNonQuery":                  executeNonQuery,
+		"CollectionPostRaw":                collectionPostRaw,
+		"ResolveCookiesWithUserFromHeader": resolveCookiesWithUserFromHeader,
 	}
 
 	for _, file := range files {
 		if filepath.Ext(file.Name()) == ".so" {
 			pluginPath := filepath.Join(pluginDir, file.Name())
-			err = pl.loadPlugin(pluginPath, plArgs)
+			err = loadPlugin(pluginPath, plArgs)
 			if err != nil {
 				log.Printf("Failed to load plugin %s: %v", pluginPath, err)
 			} else {
@@ -88,7 +77,8 @@ func (pl *PluginLoader) LoadPlugins(mux *http.ServeMux) error {
 	return nil
 }
 
-func (pl *PluginLoader) loadPlugin(pluginPath string, ctx map[string]interface{}) error {
+func loadPlugin(pluginPath string, ctx map[string]interface{}) error {
+	pl := pluginfunctions.GetPluginLoader()
 	p, err := plugin.Open(pluginPath)
 	if err != nil {
 		return fmt.Errorf("failed to open plugin: %v", err)

@@ -3,8 +3,8 @@ package querygenerators
 import (
 	"fmt"
 
-	"github.com/xomatix/silly-syntax-backend-bonanza/database"
 	"github.com/xomatix/silly-syntax-backend-bonanza/database/authentication"
+	"github.com/xomatix/silly-syntax-backend-bonanza/database/database_config"
 
 	"strings"
 )
@@ -21,7 +21,7 @@ type InsertQueryCreator struct {
 // and returns the generated insert query string along with a potential error and guid of the inserted row.
 func (q InsertQueryCreator) InsertQuery() (string, error) {
 
-	tableConfig, err := database.GetTableConfig(q.CollectionName)
+	tableConfig, err := database_config.GetTableConfig(q.CollectionName)
 	if err != nil {
 		return "", err
 	}
@@ -38,11 +38,11 @@ func (q InsertQueryCreator) InsertQuery() (string, error) {
 		if !exists {
 			continue
 		}
-		if column.DataType == database.DTDOUBLE || column.DataType == database.DTINTEGER || column.DataType == database.DTBOOLEAN || column.DataType == database.DTREFERENCE {
+		if column.DataType == database_config.DTDOUBLE || column.DataType == database_config.DTINTEGER || column.DataType == database_config.DTBOOLEAN || column.DataType == database_config.DTREFERENCE {
 			if len(fmt.Sprintf("%v", val)) > 0 {
 				sqlValues = append(sqlValues, fmt.Sprintf("%v", val))
 			}
-		} else if column.DataType == database.DTTEXT && q.CollectionName == "users" && column.Name == "password" {
+		} else if column.DataType == database_config.DTTEXT && q.CollectionName == "users" && column.Name == "password" {
 			hashedPassword, err := authentication.HashPassword(val.(string))
 			if err != nil {
 				return "", fmt.Errorf("failed to hash password: %v", err)

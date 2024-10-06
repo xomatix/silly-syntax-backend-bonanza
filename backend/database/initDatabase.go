@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/xomatix/silly-syntax-backend-bonanza/database/authentication"
+	"github.com/xomatix/silly-syntax-backend-bonanza/database/database_config"
+	"github.com/xomatix/silly-syntax-backend-bonanza/database/database_functions"
 )
 
 func InitDatabase() error {
@@ -35,7 +37,7 @@ func InitDatabase() error {
 		key TEXT,
 		config TEXT
 	);`
-	_, err := ExecuteNonQuery(qInitTablesConfig)
+	_, err := database_functions.ExecuteNonQuery(qInitTablesConfig)
 	if err != nil {
 		return err
 	}
@@ -47,67 +49,67 @@ func InitDatabasePermissions() error {
 
 	tpName := "tables_permissions"
 	//tables_permissions
-	if _, err := GetTableConfig(tpName); err != nil {
+	if _, err := database_config.GetTableConfig(tpName); err != nil {
 		err := CrateTable(tpName)
 		if err != nil {
 			return err
 		}
-		AddColumnToTable(tpName, ColumnConfig{
+		AddColumnToTable(tpName, database_config.ColumnConfig{
 			Name:     "tableName",
-			DataType: DTTEXT,
+			DataType: database_config.DTTEXT,
 			Unique:   true,
 			NotNull:  true,
 		})
-		AddColumnToTable(tpName, ColumnConfig{
+		AddColumnToTable(tpName, database_config.ColumnConfig{
 			Name:     "c",
-			DataType: DTTEXT,
+			DataType: database_config.DTTEXT,
 		})
-		AddColumnToTable(tpName, ColumnConfig{
+		AddColumnToTable(tpName, database_config.ColumnConfig{
 			Name:     "r",
-			DataType: DTTEXT,
+			DataType: database_config.DTTEXT,
 		})
-		AddColumnToTable(tpName, ColumnConfig{
+		AddColumnToTable(tpName, database_config.ColumnConfig{
 			Name:     "u",
-			DataType: DTTEXT,
+			DataType: database_config.DTTEXT,
 		})
-		AddColumnToTable(tpName, ColumnConfig{
+		AddColumnToTable(tpName, database_config.ColumnConfig{
 			Name:     "d",
-			DataType: DTTEXT,
+			DataType: database_config.DTTEXT,
 		})
 		qPermissionsInit := fmt.Sprintf(`INSERT INTO tables_permissions (tableName, c,r,u,d) VALUES ('%s', '', '', '', '');`, tpName)
-		_, err = ExecuteNonQuery(qPermissionsInit)
+		_, err = database_functions.ExecuteNonQuery(qPermissionsInit)
 		if err != nil {
 			return err
 		}
 	}
 
 	//users
-	if _, err := GetTableConfig("users"); err != nil {
+	if _, err := database_config.GetTableConfig("users"); err != nil {
 		err := CrateTable("users")
 		if err != nil {
 			return err
 		}
-		AddColumnToTable("users", ColumnConfig{
+		AddColumnToTable("users", database_config.ColumnConfig{
 			Name:     "password",
-			DataType: DTTEXT,
+			DataType: database_config.DTTEXT,
 			NotNull:  true,
 			Unique:   true,
 		})
-		AddColumnToTable("users", ColumnConfig{
+		AddColumnToTable("users", database_config.ColumnConfig{
 			Name:     "username",
-			DataType: DTTEXT,
+			DataType: database_config.DTTEXT,
 			NotNull:  true,
 		})
-		AddColumnToTable("users", ColumnConfig{
+		AddColumnToTable("users", database_config.ColumnConfig{
 			Name:     "email",
-			DataType: DTTEXT,
+			DataType: database_config.DTTEXT,
 			Unique:   true,
 		})
 
 		hPassword, _ := authentication.HashPassword("admin")
 		qInsertAdmin := fmt.Sprintf(`INSERT INTO users (username, email, password) VALUES ('admin', 'admin', '%s');`, hPassword)
 
-		_, err = ExecuteNonQuery(qInsertAdmin)
+		_, err = database_functions.ExecuteNonQuery(qInsertAdmin)
 		if err != nil {
 			return err
 		}
@@ -120,20 +122,20 @@ func InitDatabaseViews() error {
 
 	tpName := "views"
 	//views
-	if _, err := GetTableConfig(tpName); err != nil {
+	if _, err := database_config.GetTableConfig(tpName); err != nil {
 		err := CrateTable(tpName)
 		if err != nil {
 			return err
 		}
-		AddColumnToTable(tpName, ColumnConfig{
+		AddColumnToTable(tpName, database_config.ColumnConfig{
 			Name:     "name",
-			DataType: DTTEXT,
+			DataType: database_config.DTTEXT,
 			Unique:   true,
 			NotNull:  true,
 		})
-		AddColumnToTable(tpName, ColumnConfig{
+		AddColumnToTable(tpName, database_config.ColumnConfig{
 			Name:     "query",
-			DataType: DTTEXT,
+			DataType: database_config.DTTEXT,
 		})
 	}
 

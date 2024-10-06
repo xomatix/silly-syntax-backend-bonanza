@@ -5,7 +5,7 @@ import (
 
 	"strings"
 
-	"github.com/xomatix/silly-syntax-backend-bonanza/database"
+	"github.com/xomatix/silly-syntax-backend-bonanza/database/database_config"
 )
 
 type DeleteQueryCreator struct {
@@ -16,7 +16,7 @@ type DeleteQueryCreator struct {
 
 func (q DeleteQueryCreator) DeleteQuery() (string, error) {
 
-	_, err := database.GetTableConfig(q.CollectionName)
+	_, err := database_config.GetTableConfig(q.CollectionName)
 	if err != nil {
 		return "", err
 	}
@@ -32,11 +32,11 @@ func (q DeleteQueryCreator) DeleteQuery() (string, error) {
 		filter = fmt.Sprintf(" AND (%s)", q.Filter)
 	}
 
-	tableConfig := database.GetTablesConfig()
+	tableConfig := database_config.GetTablesConfig()
 	for _, v := range tableConfig {
 		if v.Name != q.CollectionName {
 			for _, column := range v.Columns {
-				if column.DataType == database.DTREFERENCE && column.ReferenceTable == q.CollectionName {
+				if column.DataType == database_config.DTREFERENCE && column.ReferenceTable == q.CollectionName {
 					referencesClear = fmt.Sprintf("%s; UPDATE %s SET %s = NULL WHERE %s = %d %s;", referencesClear, v.Name, column.Name, column.Name, q.ID, filter)
 				}
 			}

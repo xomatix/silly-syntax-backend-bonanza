@@ -9,7 +9,7 @@ import (
 
 	"github.com/xomatix/silly-syntax-backend-bonanza/api/types"
 	"github.com/xomatix/silly-syntax-backend-bonanza/database/authentication"
-	pluginmanager "github.com/xomatix/silly-syntax-backend-bonanza/pluginManager"
+	pluginfunctions "github.com/xomatix/silly-syntax-backend-bonanza/pluginManager/plugin_functions"
 )
 
 // InitExtensionsRoutes registers the /api/{custom_name} route, which
@@ -52,7 +52,7 @@ func InitExtensionsRoutes(mux *http.ServeMux) {
 			}
 			// endregion
 
-			pathHandler, ok := pluginmanager.GetPluginLoader().Api[requestedApiMethod]
+			pathHandler, ok := pluginfunctions.GetPluginLoader().Api[requestedApiMethod]
 			if !ok {
 				resp.Success = false
 				resp.Message = fmt.Sprintf("Requested API method not found: '%s'", requestedApiMethod)

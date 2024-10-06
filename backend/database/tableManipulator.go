@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"slices"
+
+	"github.com/xomatix/silly-syntax-backend-bonanza/database/database_config"
+	"github.com/xomatix/silly-syntax-backend-bonanza/database/database_functions"
 )
 
 // CrateTable creates a new table in the database with the specified table name.
@@ -16,7 +19,7 @@ import (
 // Returns an error if there was a problem creating the table.
 func CrateTable(tableName string) error {
 
-	actualTableConfig := GetTablesConfig()
+	actualTableConfig := database_config.GetTablesConfig()
 	_, existsInConfig := actualTableConfig[tableName]
 	reservedTableNames := []string{"settings", "tables_config"}
 
@@ -29,12 +32,12 @@ func CrateTable(tableName string) error {
 		created DATETIME DEFAULT CURRENT_TIMESTAMP,
 		updated DATETIME DEFAULT CURRENT_TIMESTAMP
 		);`, tableName)
-	_, err := ExecuteNonQuery(qInitTable)
+	_, err := database_functions.ExecuteNonQuery(qInitTable)
 	if err != nil {
 		return err
 	}
 	qInitTableIndex := fmt.Sprintf(`CREATE INDEX IF NOT EXISTS %s_idx ON %s (id);`, tableName, tableName)
-	_, err = ExecuteNonQuery(qInitTableIndex)
+	_, err = database_functions.ExecuteNonQuery(qInitTableIndex)
 	if err != nil {
 		return err
 	}
@@ -44,48 +47,48 @@ func CrateTable(tableName string) error {
 		BEGIN
 			UPDATE %s SET updated = CURRENT_TIMESTAMP WHERE id = OLD.id;
 		END;`, tableName, tableName, tableName)
-	_, err = ExecuteNonQuery(qUpdateTrigger)
+	_, err = database_functions.ExecuteNonQuery(qUpdateTrigger)
 	if err != nil {
 		return err
 	}
 	if tableName != "tables_permissions" {
 		qPermissionsInit := fmt.Sprintf(`INSERT INTO tables_permissions (tableName, c,r,u,d) VALUES ('%s', '', '', '', '');`, tableName)
-		_, err = ExecuteNonQuery(qPermissionsInit)
+		_, err = database_functions.ExecuteNonQuery(qPermissionsInit)
 		if err != nil {
 			return err
 		}
 	}
 
-	columns := []ColumnConfig{
+	columns := []database_config.ColumnConfig{
 		{
 			Name:     "id",
-			DataType: DTINTEGER,
+			DataType: database_config.DTINTEGER,
 			NotNull:  true,
 			Unique:   true,
 		},
 		{
 			Name:     "created",
-			DataType: DTDATETIME,
+			DataType: database_config.DTDATETIME,
 			NotNull:  true,
 			Unique:   true,
 		},
 		{
 			Name:     "updated",
-			DataType: DTDATETIME,
+			DataType: database_config.DTDATETIME,
 			NotNull:  true,
 			Unique:   true,
 		},
 	}
 
-	actualTableConfig[tableName] = TableConfig{
+	actualTableConfig[tableName] = database_config.TableConfig{
 		Name:    tableName,
 		Columns: columns,
 	}
-	tablesConfig = actualTableConfig
+	database_config.SetTablesConfig(actualTableConfig)
 
 	jsonStr, _ := json.Marshal(actualTableConfig[tableName])
 	qInsertConfig := fmt.Sprintf(`INSERT INTO tables_config (key, config) VALUES ('%s', '%s');`, tableName, jsonStr)
-	_, err = ExecuteNonQuery(qInsertConfig)
+	_, err = database_functions.ExecuteNonQuery(qInsertConfig)
 	if err != nil {
 		return err
 	}
@@ -99,9 +102,9 @@ func CrateTable(tableName string) error {
 // - tableName: the name of the table to which the column will be added.
 // - columnConf: the configuration of the column to be added.
 // Returns an error if there was a problem adding the column.
-func AddColumnToTable(tableName string, columnConf ColumnConfig) error {
+func AddColumnToTable(tableName string, columnConf database_config.ColumnConfig) error {
 	// check if table exists
-	actualTableConfig, err := GetTableConfig(tableName)
+	actualTableConfig, err := database_config.GetTableConfig(tableName)
 	if err != nil {
 		return err
 	}
@@ -109,24 +112,24 @@ func AddColumnToTable(tableName string, columnConf ColumnConfig) error {
 	// check table data type
 	strDataType := ""
 	switch columnConf.DataType {
-	case DTBOOLEAN:
+	case database_config.DTBOOLEAN:
 		strDataType = "BOOLEAN"
-	case DTINTEGER:
+	case database_config.DTINTEGER:
 		strDataType = "INTEGER"
-	case DTDOUBLE:
+	case database_config.DTDOUBLE:
 		strDataType = "DOUBLE"
-	case DTTEXT:
+	case database_config.DTTEXT:
 		strDataType = "TEXT"
-	case DTDATETIME:
+	case database_config.DTDATETIME:
 		strDataType = "DATETIME"
-	case DTREFERENCE:
+	case database_config.DTREFERENCE:
 		strDataType = "INTEGER"
 	}
 	if strDataType == "" {
 		return fmt.Errorf("invalid data type: %v", columnConf.DataType)
 	}
-	if columnConf.DataType == DTREFERENCE {
-		_, err := GetTableConfig(columnConf.ReferenceTable)
+	if columnConf.DataType == database_config.DTREFERENCE {
+		_, err := database_config.GetTableConfig(columnConf.ReferenceTable)
 		if err != nil {
 			return fmt.Errorf("invalid reference table: %v", columnConf.ReferenceTable)
 		}
@@ -145,10 +148,10 @@ func AddColumnToTable(tableName string, columnConf ColumnConfig) error {
 	qNotNull := ""
 	if columnConf.NotNull {
 		qNotNull = "NOT NULL "
-		if columnConf.DataType == DTREFERENCE || columnConf.DataType == DTTEXT {
+		if columnConf.DataType == database_config.DTREFERENCE || columnConf.DataType == database_config.DTTEXT {
 			qNotNull += "DEFAULT ''"
 		}
-		if columnConf.DataType == DTBOOLEAN || columnConf.DataType == DTINTEGER || columnConf.DataType == DTDOUBLE || columnConf.DataType == DTDATETIME {
+		if columnConf.DataType == database_config.DTBOOLEAN || columnConf.DataType == database_config.DTINTEGER || columnConf.DataType == database_config.DTDOUBLE || columnConf.DataType == database_config.DTDATETIME {
 			qNotNull += "DEFAULT 0"
 		}
 	}
@@ -186,17 +189,17 @@ func AddColumnToTable(tableName string, columnConf ColumnConfig) error {
 		ADD COLUMN %s %s %s ; %s`,
 		tableName,
 		columnConf.Name, strDataType, qNotNull, qUnique)
-	_, err = ExecuteNonQuery(qAddColumn)
+	_, err = database_functions.ExecuteNonQuery(qAddColumn)
 	if err != nil {
 		return err
 	}
 
 	// index only mechanism for references not foreign key
-	if columnConf.DataType == DTREFERENCE {
+	if columnConf.DataType == database_config.DTREFERENCE {
 		qAddColumn := fmt.Sprintf(`
 		CREATE INDEX IF NOT EXISTS idx_%s_%s ON %s(%s);`,
 			columnConf.ReferenceTable, columnConf.Name, tableName, columnConf.Name)
-		_, err = ExecuteNonQuery(qAddColumn)
+		_, err = database_functions.ExecuteNonQuery(qAddColumn)
 		if err != nil {
 			return err
 		}
@@ -208,9 +211,13 @@ func AddColumnToTable(tableName string, columnConf ColumnConfig) error {
 	if err != nil {
 		return err
 	}
+
+	tablesConfig := database_config.GetTablesConfig()
 	tablesConfig[tableName] = actualTableConfig
+	database_config.SetTablesConfig(tablesConfig)
+
 	qUpdateTableConfig := fmt.Sprintf(`UPDATE tables_config SET config = '%s' WHERE key = '%s';`, jsonStr, tableName)
-	_, err = ExecuteNonQuery(qUpdateTableConfig)
+	_, err = database_functions.ExecuteNonQuery(qUpdateTableConfig)
 	if err != nil {
 		return err
 	}
@@ -224,21 +231,21 @@ func AddColumnToTable(tableName string, columnConf ColumnConfig) error {
 // - tableName: the name of the table to which the column will be added.
 // - columnConf: the configuration of the column to be added.
 // Returns an error if there was a problem adding the column.
-func RemoveColumnFromTable(tableName string, columnConfig ColumnConfig) error {
+func RemoveColumnFromTable(tableName string, columnConfig database_config.ColumnConfig) error {
 	// check if table exists
-	actualTableConfig, err := GetTableConfig(tableName)
+	actualTableConfig, err := database_config.GetTableConfig(tableName)
 	if err != nil {
 		return err
 	}
 
 	for _, v := range actualTableConfig.Columns {
-		if v.Name == columnConfig.Name && v.DataType == DTREFERENCE {
+		if v.Name == columnConfig.Name && v.DataType == database_config.DTREFERENCE {
 			qDropIndex := fmt.Sprintf(`DROP INDEX IF EXISTS idx_%s_%s;`, v.ReferenceTable, v.Name)
 
 			qDropUniqueConstrainInsert := fmt.Sprintf(`DROP INDEX IF EXISTS enforce_unique_%s_%s_insert;`, v.ReferenceTable, v.Name)
 
 			qDropUniqueConstrainUpdate := fmt.Sprintf(`DROP INDEX IF EXISTS enforce_unique_%s_%s_update;`, v.ReferenceTable, v.Name)
-			_, err := ExecuteNonQuery(qDropIndex + qDropUniqueConstrainInsert + qDropUniqueConstrainUpdate)
+			_, err := database_functions.ExecuteNonQuery(qDropIndex + qDropUniqueConstrainInsert + qDropUniqueConstrainUpdate)
 			if err != nil {
 				return err
 			}
@@ -250,7 +257,7 @@ func RemoveColumnFromTable(tableName string, columnConfig ColumnConfig) error {
 		DROP COLUMN %s;`,
 		tableName,
 		columnConfig.Name)
-	_, err = ExecuteNonQuery(qRemoveColumn)
+	_, err = database_functions.ExecuteNonQuery(qRemoveColumn)
 	if err != nil {
 		return err
 	}
@@ -264,9 +271,12 @@ func RemoveColumnFromTable(tableName string, columnConfig ColumnConfig) error {
 	}
 	jsonStr, _ := tableConfigToJson(actualTableConfig)
 
+	tablesConfig := database_config.GetTablesConfig()
 	tablesConfig[tableName] = actualTableConfig
+	database_config.SetTablesConfig(tablesConfig)
+
 	qUpdateTableConfig := fmt.Sprintf(`UPDATE tables_config SET config = '%s' WHERE key = '%s';`, jsonStr, tableName)
-	_, err = ExecuteNonQuery(qUpdateTableConfig)
+	_, err = database_functions.ExecuteNonQuery(qUpdateTableConfig)
 	if err != nil {
 		return err
 	}
@@ -276,34 +286,34 @@ func RemoveColumnFromTable(tableName string, columnConfig ColumnConfig) error {
 
 func DeleteTable(tableName string) error {
 	// check if table exists
-	_, err := GetTableConfig(tableName)
+	_, err := database_config.GetTableConfig(tableName)
 	if err != nil {
 		return err
 	}
 
 	qDeleteTable := fmt.Sprintf(`DROP TABLE %s;`, tableName)
-	_, err = ExecuteNonQuery(qDeleteTable)
+	_, err = database_functions.ExecuteNonQuery(qDeleteTable)
 	if err != nil {
 		return err
 	}
 
 	qDeleteTableConfig := fmt.Sprintf(`DELETE FROM tables_config WHERE key='%s';`, tableName)
-	_, err = ExecuteNonQuery(qDeleteTableConfig)
+	_, err = database_functions.ExecuteNonQuery(qDeleteTableConfig)
 	if err != nil {
 		return err
 	}
 
 	qDeletePermissions := fmt.Sprintf(`DELETE FROM tables_permissions WHERE tableName = '%s';`, tableName)
-	_, err = ExecuteNonQuery(qDeletePermissions)
+	_, err = database_functions.ExecuteNonQuery(qDeletePermissions)
 	if err != nil {
 		return err
 	}
 
-	LoadTablesConfig()
+	database_config.LoadTablesConfig()
 	return nil
 }
 
-func tableConfigToJson(tableConf TableConfig) (string, error) {
+func tableConfigToJson(tableConf database_config.TableConfig) (string, error) {
 	jsonString, err := json.Marshal(tableConf)
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal/stringify column config: %v", err)

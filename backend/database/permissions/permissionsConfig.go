@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/xomatix/silly-syntax-backend-bonanza/database"
+	"github.com/xomatix/silly-syntax-backend-bonanza/database/database_functions"
 	querygenerators "github.com/xomatix/silly-syntax-backend-bonanza/database/queryGenerators"
 )
 
@@ -47,7 +47,7 @@ func LoadTablesPermissions() error {
 		return fmt.Errorf("failed to load tables permissions: %v 1", err)
 	}
 
-	res, err := database.ExecuteQuery(selectQuery)
+	res, err := database_functions.ExecuteQuery(selectQuery)
 	if err != nil {
 		return fmt.Errorf("failed to load tables permissions: %v 2", err)
 	}

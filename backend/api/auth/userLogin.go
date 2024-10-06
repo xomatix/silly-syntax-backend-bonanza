@@ -7,8 +7,8 @@ import (
 	"net/http"
 
 	"github.com/xomatix/silly-syntax-backend-bonanza/api/types"
-	"github.com/xomatix/silly-syntax-backend-bonanza/database"
 	"github.com/xomatix/silly-syntax-backend-bonanza/database/authentication"
+	"github.com/xomatix/silly-syntax-backend-bonanza/database/database_functions"
 	querygenerators "github.com/xomatix/silly-syntax-backend-bonanza/database/queryGenerators"
 )
 
@@ -48,7 +48,7 @@ func InitAuthenticationLoginRoutes(w http.ResponseWriter, r *http.Request) {
 		Limit:          1,
 	}
 	generatedSelectQuery, _ := query.GetQuery()
-	result, err := database.ExecuteQuery(generatedSelectQuery)
+	result, err := database_functions.ExecuteQuery(generatedSelectQuery)
 	if err != nil {
 		fmt.Println(generatedSelectQuery)
 		resp.Success = false

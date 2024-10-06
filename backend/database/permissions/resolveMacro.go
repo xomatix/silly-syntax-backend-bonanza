@@ -5,7 +5,8 @@ import (
 
 	"strings"
 
-	"github.com/xomatix/silly-syntax-backend-bonanza/database"
+	"github.com/xomatix/silly-syntax-backend-bonanza/database/database_config"
+	"github.com/xomatix/silly-syntax-backend-bonanza/database/database_functions"
 	querygenerators "github.com/xomatix/silly-syntax-backend-bonanza/database/queryGenerators"
 )
 
@@ -15,14 +16,14 @@ func ResolvePermissionsMacro(macro string, userID int64) string {
 		ID:             []int64{userID},
 	}
 
-	userConfig, _ := database.GetTableConfig("users")
+	userConfig, _ := database_config.GetTableConfig("users")
 
 	query, err := q.GetQuery()
 	if err != nil {
 		return macro
 	}
 
-	result, err := database.ExecuteQuery(query)
+	result, err := database_functions.ExecuteQuery(query)
 	if err != nil {
 		return macro
 	}
@@ -34,7 +35,7 @@ func ResolvePermissionsMacro(macro string, userID int64) string {
 	for key, value := range result[0] {
 		resolved := false
 		for _, v := range userConfig.Columns {
-			if v.Name == key && (v.DataType == database.DTTEXT || v.DataType == database.DTDATETIME) {
+			if v.Name == key && (v.DataType == database_config.DTTEXT || v.DataType == database_config.DTDATETIME) {
 				macro = strings.ReplaceAll(macro, fmt.Sprintf("@user.%s", key), fmt.Sprintf("'%v'", value))
 				resolved = true
 				break

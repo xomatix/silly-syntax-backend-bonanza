@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/xomatix/silly-syntax-backend-bonanza/database"
 	"github.com/xomatix/silly-syntax-backend-bonanza/database/authentication"
+	"github.com/xomatix/silly-syntax-backend-bonanza/database/database_config"
+	"github.com/xomatix/silly-syntax-backend-bonanza/database/database_functions"
 )
 
 type UpdateQueryCreator struct {
@@ -25,7 +26,7 @@ func (q UpdateQueryCreator) SelectQuery() (string, error) {
 
 func (q UpdateQueryCreator) UpdateQuery() (string, error) {
 
-	tableConfig, err := database.GetTableConfig(q.CollectionName)
+	tableConfig, err := database_config.GetTableConfig(q.CollectionName)
 	if err != nil {
 		return "", err
 	}
@@ -43,15 +44,15 @@ func (q UpdateQueryCreator) UpdateQuery() (string, error) {
 		if column.Name != "password" && column.NotNull && (len(fmt.Sprintf("%v", val)) == 0) {
 			return "", fmt.Errorf("column %s cannot be null", column.Name)
 		}
-		if column.DataType == database.DTDOUBLE || column.DataType == database.DTINTEGER || column.DataType == database.DTBOOLEAN {
+		if column.DataType == database_config.DTDOUBLE || column.DataType == database_config.DTINTEGER || column.DataType == database_config.DTBOOLEAN {
 			sqlValues = append(sqlValues, fmt.Sprintf("%s = %v", column.Name, val))
-		} else if column.DataType == database.DTTEXT && !(len(val.(string)) == 0) && q.CollectionName == "users" && column.Name == "password" {
+		} else if column.DataType == database_config.DTTEXT && !(len(val.(string)) == 0) && q.CollectionName == "users" && column.Name == "password" {
 			hashedPassword, err := authentication.HashPassword(val.(string))
 			if err != nil {
 				return "", fmt.Errorf("failed to hash password: %v", err)
 			}
 			sqlValues = append(sqlValues, fmt.Sprintf("%s = '%s'", column.Name, hashedPassword))
-		} else if column.DataType == database.DTREFERENCE && len(val.(string)) > 0 {
+		} else if column.DataType == database_config.DTREFERENCE {
 			if int(val.(float64)) != 0 || column.NotNull {
 				isNotPresent := checkIfForeignKeysExist(column.ReferenceTable, fmt.Sprintf("%d", int(val.(float64))))
 				if isNotPresent != nil {
@@ -80,7 +81,7 @@ func (q UpdateQueryCreator) UpdateQuery() (string, error) {
 func checkIfForeignKeysExist(collectionName string, id string) error {
 	q := fmt.Sprintf("SELECT count(*) > 0 as e FROM %s WHERE id = %s LIMIT 1;", collectionName, id)
 
-	res, err := database.ExecuteQuery(q)
+	res, err := database_functions.ExecuteQuery(q)
 
 	if err == nil && len(res) > 0 && res[0]["e"].(int64) > 0 {
 		return nil

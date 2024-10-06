@@ -1,8 +1,10 @@
-package database
+package database_config
 
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/xomatix/silly-syntax-backend-bonanza/database/database_functions"
 )
 
 type TableConfig struct {
@@ -42,6 +44,10 @@ func GetTablesConfig() map[string]TableConfig {
 	return tablesConfig
 }
 
+func SetTablesConfig(newConfig map[string]TableConfig) {
+	tablesConfig = newConfig
+}
+
 // GetTableConfig retrieves the TableConfig for a specific table by its name.
 //
 // tableName: the name of the table for which to retrieve the TableConfig.
@@ -59,7 +65,7 @@ func GetTableConfig(tableName string) (TableConfig, error) {
 // No parameters.
 // No return values.
 func LoadTablesConfig() {
-	res, err := ExecuteQuery("SELECT id, config FROM tables_config;")
+	res, err := database_functions.ExecuteQuery("SELECT id, config FROM tables_config;")
 	if err != nil {
 		fmt.Printf("failed to load tables from database: %v", err)
 	}

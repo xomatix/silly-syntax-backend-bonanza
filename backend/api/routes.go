@@ -11,6 +11,7 @@ import (
 	"github.com/xomatix/silly-syntax-backend-bonanza/api/types"
 	"github.com/xomatix/silly-syntax-backend-bonanza/api/views"
 	"github.com/xomatix/silly-syntax-backend-bonanza/database"
+	"github.com/xomatix/silly-syntax-backend-bonanza/database/database_config"
 	"github.com/xomatix/silly-syntax-backend-bonanza/database/permissions"
 )
 
@@ -61,8 +62,8 @@ func initDatabaseManipulationRoutes(mux *http.ServeMux) {
 
 	mux.HandleFunc("/api/tables", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
-			tabConfArr := make([]database.TableConfig, 0)
-			for _, v := range database.GetTablesConfig() {
+			tabConfArr := make([]database_config.TableConfig, 0)
+			for _, v := range database_config.GetTablesConfig() {
 				// if v.Name == "tables_permissions" {
 				// 	continue
 				// }
@@ -96,7 +97,7 @@ func initDatabaseManipulationRoutes(mux *http.ServeMux) {
 				w.Write(jsonString)
 				return
 			}
-			var tableConf database.TableConfig
+			var tableConf database_config.TableConfig
 			err = json.Unmarshal(body, &tableConf)
 			if err != nil {
 				resp.Success = false
@@ -134,7 +135,7 @@ func initDatabaseManipulationRoutes(mux *http.ServeMux) {
 				w.Write(jsonString)
 				return
 			}
-			var tabConf database.TableConfig
+			var tabConf database_config.TableConfig
 			err = json.Unmarshal(body, &tabConf)
 			if err != nil {
 				resp.Success = false
@@ -172,7 +173,7 @@ func initDatabaseManipulationRoutes(mux *http.ServeMux) {
 				w.Write(jsonString)
 				return
 			}
-			var tabConf database.TableConfig
+			var tabConf database_config.TableConfig
 			err = json.Unmarshal(body, &tabConf)
 			if err != nil {
 				resp.Success = false
@@ -215,7 +216,7 @@ func initDatabaseManipulationRoutes(mux *http.ServeMux) {
 				w.Write(jsonString)
 				return
 			}
-			var tabConf database.TableConfig
+			var tabConf database_config.TableConfig
 			err = json.Unmarshal(body, &tabConf)
 			if err != nil {
 				resp.Success = false

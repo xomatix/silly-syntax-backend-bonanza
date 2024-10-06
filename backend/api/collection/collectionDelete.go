@@ -6,10 +6,10 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/xomatix/silly-syntax-backend-bonanza/database"
 	"github.com/xomatix/silly-syntax-backend-bonanza/database/authentication"
+	"github.com/xomatix/silly-syntax-backend-bonanza/database/database_functions"
 	"github.com/xomatix/silly-syntax-backend-bonanza/database/permissions"
-	pluginmanager "github.com/xomatix/silly-syntax-backend-bonanza/pluginManager"
+	pluginfunctions "github.com/xomatix/silly-syntax-backend-bonanza/pluginManager/plugin_functions"
 
 	"github.com/xomatix/silly-syntax-backend-bonanza/api/types"
 	querygenerators "github.com/xomatix/silly-syntax-backend-bonanza/database/queryGenerators"
@@ -87,7 +87,7 @@ func InitCollectionDeleteRoutes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	originalRecord, err := database.ExecuteQuery(generatedReturningQuery)
+	originalRecord, err := database_functions.ExecuteQuery(generatedReturningQuery)
 	if err != nil {
 		resp.Success = false
 		resp.Message = err.Error()
@@ -113,7 +113,7 @@ func InitCollectionDeleteRoutes(w http.ResponseWriter, r *http.Request) {
 	}
 	// endregion
 
-	_, err = database.ExecuteNonQuery(generatedDeleteQuery)
+	_, err = database_functions.ExecuteNonQuery(generatedDeleteQuery)
 	if err != nil {
 		fmt.Println(generatedDeleteQuery)
 		resp.Success = false
@@ -143,7 +143,7 @@ func InitCollectionDeleteRoutes(w http.ResponseWriter, r *http.Request) {
 }
 
 func triggerBeforeDelete(collectionName string, originalObj map[string]interface{}, obj *map[string]interface{}) error {
-	funcsToCall := pluginmanager.GetPluginLoader().Triggers[collectionName]["before_delete"]
+	funcsToCall := pluginfunctions.GetPluginLoader().Triggers[collectionName]["before_delete"]
 	for _, f := range funcsToCall {
 		err := f(originalObj, obj)
 		if err != nil {

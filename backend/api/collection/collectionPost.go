@@ -7,11 +7,11 @@ import (
 	"net/http"
 
 	"github.com/xomatix/silly-syntax-backend-bonanza/api/types"
-	"github.com/xomatix/silly-syntax-backend-bonanza/database"
 	"github.com/xomatix/silly-syntax-backend-bonanza/database/authentication"
+	"github.com/xomatix/silly-syntax-backend-bonanza/database/database_functions"
 	"github.com/xomatix/silly-syntax-backend-bonanza/database/permissions"
 	querygenerators "github.com/xomatix/silly-syntax-backend-bonanza/database/queryGenerators"
-	pluginmanager "github.com/xomatix/silly-syntax-backend-bonanza/pluginManager"
+	pluginfunctions "github.com/xomatix/silly-syntax-backend-bonanza/pluginManager/plugin_functions"
 )
 
 func InitCollectionPostRoutes(w http.ResponseWriter, r *http.Request) {
@@ -49,82 +49,14 @@ func InitCollectionPostRoutes(w http.ResponseWriter, r *http.Request) {
 		w.Write(jsonStr)
 		return
 	}
-
-	collectionPermisionMacro, err := permissions.GetTablePermissions(query.CollectionName)
-	if err != nil {
-		resp.Success = false
-		resp.Message = err.Error()
-		jsonStr, _ := json.Marshal(resp)
-		w.Write(jsonStr)
-		return
-	}
-
-	resolvedPermissionMacro := permissions.ResolvePermissionsMacro(collectionPermisionMacro.Create, userID)
-	query.Filter = resolvedPermissionMacro
-
-	generatedInsertQuery, _ := query.InsertQuery()
-	insertedID, err := database.ExecuteNonQuery(generatedInsertQuery)
-	if err != nil {
-		fmt.Println(generatedInsertQuery)
-		resp.Success = false
-		resp.Message = err.Error()
-		jsonStr, _ := json.Marshal(resp)
-		w.Write(jsonStr)
-		return
-	}
-
 	// endregion
-	resp.Data = insertedID
 
-	// region Trigger before insert
-	returningQuery := querygenerators.SelectQueryCreator{
-		CollectionName: query.CollectionName,
-		ID:             []int64{insertedID},
-	}
-	generatedReturningQuery, err := returningQuery.GetQuery()
-	if err != nil {
-		resp.Success = false
-		resp.Message = err.Error()
+	respMsg := CollectionPost(query, userID)
+	if !respMsg.Success {
 		jsonStr, _ := json.Marshal(resp)
 		w.Write(jsonStr)
 		return
 	}
-
-	originalRecord, err := database.ExecuteQuery(generatedReturningQuery)
-	if err != nil {
-		resp.Success = false
-		resp.Message = err.Error()
-		jsonStr, _ := json.Marshal(resp)
-		w.Write(jsonStr)
-		return
-	}
-
-	//so we have copy here
-	updatedRecord := make(map[string]interface{})
-	for k, v := range originalRecord[0] {
-		updatedRecord[k] = v
-	}
-	for k, v := range query.Values {
-		updatedRecord[k] = v
-	}
-
-	err = triggerBeforeSave(query.CollectionName, originalRecord[0], &updatedRecord)
-	if err != nil {
-		deleteQuery := querygenerators.DeleteQueryCreator{
-			CollectionName: query.CollectionName,
-			ID:             insertedID,
-		}
-		generatedDeleteQuery, _ := deleteQuery.DeleteQuery()
-		database.ExecuteNonQuery(generatedDeleteQuery)
-
-		resp.Success = false
-		resp.Message = "Record not inserted. " + err.Error()
-		jsonStr, _ := json.Marshal(resp)
-		w.Write(jsonStr)
-		return
-	}
-
-	triggerAfterSave(query.CollectionName, originalRecord[0], &updatedRecord)
 
 	jsonString, err := json.Marshal(resp)
 	if err != nil {
@@ -145,8 +77,85 @@ func InitCollectionPostRoutes(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonString)
 }
 
+func CollectionPost(query querygenerators.InsertQueryCreator, userID int64) types.ResponseMessage {
+	resp := types.ResponseMessage{
+		Success: true,
+		Message: "success",
+	}
+
+	collectionPermisionMacro, err := permissions.GetTablePermissions(query.CollectionName)
+	if err != nil {
+		resp.Success = false
+		resp.Message = err.Error()
+
+		return resp
+	}
+
+	resolvedPermissionMacro := permissions.ResolvePermissionsMacro(collectionPermisionMacro.Create, userID)
+	query.Filter = resolvedPermissionMacro
+
+	generatedInsertQuery, _ := query.InsertQuery()
+	insertedID, err := database_functions.ExecuteNonQuery(generatedInsertQuery)
+
+	if err != nil {
+		fmt.Println(generatedInsertQuery)
+		resp.Success = false
+		resp.Message = err.Error()
+
+		return resp
+	}
+
+	resp.Data = insertedID
+
+	// region Trigger before insert
+	returningQuery := querygenerators.SelectQueryCreator{
+		CollectionName: query.CollectionName,
+		ID:             []int64{insertedID},
+	}
+	generatedReturningQuery, err := returningQuery.GetQuery()
+
+	if err != nil {
+		resp.Success = false
+		resp.Message = err.Error()
+
+		return resp
+	}
+
+	originalRecord, err := database_functions.ExecuteQuery(generatedReturningQuery)
+	if err != nil {
+		resp.Success = false
+		resp.Message = err.Error()
+
+		return resp
+	}
+
+	//so we have copy here
+	updatedRecord := make(map[string]interface{})
+	for k, v := range originalRecord[0] {
+		updatedRecord[k] = v
+	}
+
+	err = triggerBeforeSave(query.CollectionName, originalRecord[0], &updatedRecord)
+	if err != nil {
+		deleteQuery := querygenerators.DeleteQueryCreator{
+			CollectionName: query.CollectionName,
+			ID:             insertedID,
+		}
+		generatedDeleteQuery, _ := deleteQuery.DeleteQuery()
+		database_functions.ExecuteNonQuery(generatedDeleteQuery)
+
+		resp.Success = false
+		resp.Message = "Record not inserted. " + err.Error()
+
+		return resp
+	}
+
+	triggerAfterSave(query.CollectionName, originalRecord[0], &updatedRecord)
+	return resp
+}
+
 func triggerBeforeSave(collectionName string, originalObj map[string]interface{}, obj *map[string]interface{}) error {
-	funcsToCall := pluginmanager.GetPluginLoader().Triggers[collectionName]["before_insert"]
+	funcsToCall := pluginfunctions.GetPluginLoader().Triggers[collectionName]["before_insert"]
 	for _, f := range funcsToCall {
 		err := f(originalObj, obj)
 		if err != nil {
@@ -157,7 +166,7 @@ func triggerBeforeSave(collectionName string, originalObj map[string]interface{}
 }
 
 func triggerAfterSave(collectionName string, originalObj map[string]interface{}, obj *map[string]interface{}) {
-	funcsToCall := pluginmanager.GetPluginLoader().Triggers[collectionName]["after_insert"]
+	funcsToCall := pluginfunctions.GetPluginLoader().Triggers[collectionName]["after_insert"]
 	for _, f := range funcsToCall {
 		f(originalObj, obj)
 	}

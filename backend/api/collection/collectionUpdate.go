@@ -6,11 +6,11 @@ import (
 	"net/http"
 
 	"github.com/xomatix/silly-syntax-backend-bonanza/api/types"
-	"github.com/xomatix/silly-syntax-backend-bonanza/database"
 	"github.com/xomatix/silly-syntax-backend-bonanza/database/authentication"
+	"github.com/xomatix/silly-syntax-backend-bonanza/database/database_functions"
 	"github.com/xomatix/silly-syntax-backend-bonanza/database/permissions"
 	querygenerators "github.com/xomatix/silly-syntax-backend-bonanza/database/queryGenerators"
-	pluginmanager "github.com/xomatix/silly-syntax-backend-bonanza/pluginManager"
+	pluginfunctions "github.com/xomatix/silly-syntax-backend-bonanza/pluginManager/plugin_functions"
 )
 
 func InitCollectionUpdateRoutes(w http.ResponseWriter, r *http.Request) {
@@ -70,7 +70,7 @@ func InitCollectionUpdateRoutes(w http.ResponseWriter, r *http.Request) {
 	//endregion
 
 	//region update exec with trigger
-	originalRecord, err := database.ExecuteQuery(generatedReturningQuery)
+	originalRecord, err := database_functions.ExecuteQuery(generatedReturningQuery)
 	if err != nil {
 		resp.Success = false
 		resp.Message = err.Error()
@@ -106,7 +106,7 @@ func InitCollectionUpdateRoutes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = database.ExecuteNonQuery(generatedUpdateQuery)
+	_, err = database_functions.ExecuteNonQuery(generatedUpdateQuery)
 	if err != nil {
 		resp.Success = false
 		resp.Message = err.Error()
@@ -140,7 +140,7 @@ func InitCollectionUpdateRoutes(w http.ResponseWriter, r *http.Request) {
 }
 
 func triggerBeforeUpdate(collectionName string, originalObj map[string]interface{}, obj *map[string]interface{}) error {
-	funcsToCall := pluginmanager.GetPluginLoader().Triggers[collectionName]["before_update"]
+	funcsToCall := pluginfunctions.GetPluginLoader().Triggers[collectionName]["before_update"]
 	for _, f := range funcsToCall {
 		err := f(originalObj, obj)
 		if err != nil {
@@ -151,7 +151,7 @@ func triggerBeforeUpdate(collectionName string, originalObj map[string]interface
 }
 
 func triggerAfterUpdate(collectionName string, originalObj map[string]interface{}, obj *map[string]interface{}) {
-	funcsToCall := pluginmanager.GetPluginLoader().Triggers[collectionName]["after_update"]
+	funcsToCall := pluginfunctions.GetPluginLoader().Triggers[collectionName]["after_update"]
 	for _, f := range funcsToCall {
 		f(originalObj, obj)
 	}

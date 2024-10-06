@@ -7,8 +7,8 @@ import (
 	"net/http"
 
 	"github.com/xomatix/silly-syntax-backend-bonanza/api/types"
-	"github.com/xomatix/silly-syntax-backend-bonanza/database"
 	"github.com/xomatix/silly-syntax-backend-bonanza/database/authentication"
+	"github.com/xomatix/silly-syntax-backend-bonanza/database/database_functions"
 	"github.com/xomatix/silly-syntax-backend-bonanza/database/permissions"
 	querygenerators "github.com/xomatix/silly-syntax-backend-bonanza/database/queryGenerators"
 )
@@ -57,7 +57,7 @@ func InitViewsRoutes(w http.ResponseWriter, r *http.Request) {
 		Limit:          1,
 	}
 	generatedSelectQuery, _ := query.GetQuery()
-	result, err := database.ExecuteQuery(generatedSelectQuery)
+	result, err := database_functions.ExecuteQuery(generatedSelectQuery)
 	if err != nil {
 		fmt.Println(generatedSelectQuery)
 		resp.Success = false
@@ -78,7 +78,7 @@ func InitViewsRoutes(w http.ResponseWriter, r *http.Request) {
 	resolvedQuery := result[0]["query"].(string)
 	resolvedQuery = permissions.ResolvePermissionsMacro(resolvedQuery, userID)
 
-	viewResult, err := database.ExecuteQuery(resolvedQuery)
+	viewResult, err := database_functions.ExecuteQuery(resolvedQuery)
 
 	if err != nil {
 		resp.Success = false
